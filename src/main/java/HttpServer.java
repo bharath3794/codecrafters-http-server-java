@@ -98,6 +98,7 @@ public class HttpServer {
                 outputStream.write(response.createResponse().getBytes());
             } else if (request.getRequestTarget().startsWith("/files/")) {
                 String filePath = Main.directory + request.getRequestTarget().substring(7);
+                LOGGER.info("FilePath: " + filePath);
                 HttpResponse<String> response = new HttpResponse<>();
                 if (Util.checkFileExists(filePath)) {
                     String contents = Util.readFileToString(filePath);
