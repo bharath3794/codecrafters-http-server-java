@@ -96,6 +96,8 @@ public class HttpServer {
                         .header("Content-Length", responseBody.length())
                         .responseBody(responseBody);
                 outputStream.write(response.createResponse().getBytes());
+            } else if (request.getRequestTarget().startsWith("/files/")) {
+
             } else {
                 HttpResponse<String> response = new HttpResponse<>();
 
