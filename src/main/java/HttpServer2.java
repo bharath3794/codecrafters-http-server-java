@@ -91,6 +91,9 @@ public class HttpServer2 {
                 outputStream.write("HTTP/1.1 404 Not Found\r\n\r\n".getBytes());
             }
             outputStream.flush();
+            if (!clientSocket.isClosed()) {
+                clientSocket.close();
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
