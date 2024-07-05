@@ -97,29 +97,25 @@ public class HttpServer {
                         .responseBody(responseBody);
                 outputStream.write(response.createResponse().getBytes());
             } else if (request.getRequestTarget().startsWith("/files/")) {
-                if (Main.directory != null) {
-                    HttpResponse<String> response = new HttpResponse<>();
+                String filePath = Main.directory + request.getRequestTarget().substring(7);
+                HttpResponse<String> response = new HttpResponse<>();
+                if (Util.checkFileExists(filePath)) {
+                    String contents = Util.readFileToString(filePath);
+                    long fileSize = Util.getFileSize(filePath);
 
-                    String filePath = Main.directory + request.getRequestTarget().substring(7);
-                    if (Util.checkFileExists(filePath)) {
-                        String contents = Util.readFileToString(filePath);
-                        long fileSize = Util.getFileSize(filePath);
-
-                        response.protocol(request.getProtocol().toString())
-                                .version(request.getVersion())
-                                .responseStatus(ResponseStatus.OK)
-                                .header("Content-Type", "application/octet-stream")
-                                .header("Content-Length", fileSize)
-                                .responseBody(contents);
-                        outputStream.write(response.createResponse().getBytes());
-                    } else {
-                        response.protocol(request.getProtocol().toString())
-                                .version(request.getVersion())
-                                .responseStatus(ResponseStatus.NOT_FOUND)
-                                .responseBody("");
-                        outputStream.write(response.createResponse().getBytes());
-                    }
-
+                    response.protocol(request.getProtocol().toString())
+                            .version(request.getVersion())
+                            .responseStatus(ResponseStatus.OK)
+                            .header("Content-Type", "application/octet-stream")
+                            .header("Content-Length", fileSize)
+                            .responseBody(contents);
+                    outputStream.write(response.createResponse().getBytes());
+                } else {
+                    response.protocol(request.getProtocol().toString())
+                            .version(request.getVersion())
+                            .responseStatus(ResponseStatus.NOT_FOUND)
+                            .responseBody("");
+                    outputStream.write(response.createResponse().getBytes());
                 }
             } else {
                 HttpResponse<String> response = new HttpResponse<>();
