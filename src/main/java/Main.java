@@ -9,8 +9,11 @@ import java.util.Map;
 import java.util.Objects;
 
 public class Main {
+    public static String directory = "C:/Users/vtall/Downloads/";
   public static void main(String[] args) {
-      System.out.println(Arrays.toString(args));
+//      if (args.length == 1) {
+//          Main.directory = args[0];
+//      }
       HttpServer httpServer = new HttpServer(4221, 10);
       httpServer.start();
   }
