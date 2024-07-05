@@ -11,8 +11,8 @@ import java.util.Objects;
 public class Main {
     public static String directory = null;
   public static void main(String[] args) {
-      if (args.length == 1) {
-          Main.directory = args[0];
+      if (args.length > 1 && args[0].equals("--directory")) {
+          directory = args[1];
       }
       HttpServer httpServer = new HttpServer(4221, 10);
       httpServer.start();
