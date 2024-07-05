@@ -18,4 +18,9 @@ public class Util {
         Path path = Paths.get(filePath);
         return Files.exists(path);
     }
+
+    public static long getFileSize(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        return Files.size(path);
+    }
 }

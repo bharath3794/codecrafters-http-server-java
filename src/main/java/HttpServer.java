@@ -103,12 +103,13 @@ public class HttpServer {
                     String filePath = Main.directory + request.getRequestTarget().substring(7);
                     if (Util.checkFileExists(filePath)) {
                         String contents = Util.readFileToString(filePath);
+                        long fileSize = Util.getFileSize(filePath);
 
                         response.protocol(request.getProtocol().toString())
                                 .version(request.getVersion())
                                 .responseStatus(ResponseStatus.OK)
                                 .header("Content-Type", "application/octet-stream")
-                                .header("Content-Length", contents.length())
+                                .header("Content-Length", fileSize)
                                 .responseBody(contents);
                         outputStream.write(response.createResponse().getBytes());
                     } else {
