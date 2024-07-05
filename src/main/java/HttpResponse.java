@@ -85,7 +85,8 @@ public class HttpResponse<T> {
         sb.append(LINE_FEED);
 
         //Response Body
-        sb.append(responseBody.toString());
+        if (responseBody != null)
+            sb.append(responseBody.toString());
 
         return sb.toString();
     }

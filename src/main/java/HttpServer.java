@@ -55,15 +55,9 @@ public class HttpServer {
         }
     }
 
-    private void handleRequest(Socket clientSocket) {
-        LOGGER.info("Handling request on thread: " + Thread.currentThread().getName());
-        try (
-                final InputStream inputStream = clientSocket.getInputStream();
-                final OutputStream outputStream = clientSocket.getOutputStream();
-        ) {
-            // Read HttpRequest
-            HttpRequest request = HttpRequest.fromInputStream(inputStream);
-
+    private void handleGetRequest(HttpRequest request, OutputStream outputStream) {
+        LOGGER.info("Handling GET request...");
+        try {
             // Request Response
             if (Objects.equals(request.getRequestTarget(), "/")) {
                 HttpResponse<String> response = new HttpResponse<>();
@@ -98,7 +92,7 @@ public class HttpServer {
                 outputStream.write(response.createResponse().getBytes());
             } else if (request.getRequestTarget().startsWith("/files/")) {
                 String filePath = Main.directory + request.getRequestTarget().substring(7);
-                LOGGER.info("FilePath: " + filePath);
+                LOGGER.info("Read FilePath: " + filePath);
                 HttpResponse<String> response = new HttpResponse<>();
                 if (Util.checkFileExists(filePath)) {
                     String contents = Util.readFileToString(filePath);
@@ -127,13 +121,57 @@ public class HttpServer {
                         .responseBody("");
                 outputStream.write(response.createResponse().getBytes());
             }
-            outputStream.flush();
-            if (!clientSocket.isClosed()) {
-                clientSocket.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void handlePostRequest(HttpRequest request, OutputStream outputStream) {
+        LOGGER.info("Handling POST request...");
+        try {
+            if (request.getRequestTarget().startsWith("/files/")) {
+                HttpResponse<String> response = new HttpResponse<>();
+                String filePath = Main.directory + request.getRequestTarget().substring(7);
+                LOGGER.info("FilePath: " + filePath);
+
+                Util.writeToFileUsingBufferedWriter(filePath, request.getRequestBody());
+
+                response.protocol(request.getProtocol().toString())
+                        .version(request.getVersion())
+                        .responseStatus(ResponseStatus.CREATED);
+                outputStream.write(response.createResponse().getBytes());
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void handleRequest(Socket clientSocket) {
+        LOGGER.info("Handling request on thread: " + Thread.currentThread().getName());
+        try (
+                final InputStream inputStream = clientSocket.getInputStream();
+                final OutputStream outputStream = clientSocket.getOutputStream();
+        ) {
+            // Read HttpRequest
+            HttpRequest request = HttpRequest.fromInputStream(inputStream);
+
+            switch (request.getRequestType()) {
+                case GET -> handleGetRequest(request, outputStream);
+                case POST -> handlePostRequest(request, outputStream);
+            }
+
+            outputStream.flush();
         } catch (IOException e) {
             LOGGER.severe("IOException occurred with message: " + e.getMessage());
             throw new RuntimeException(e);
+        } finally {
+            try {
+                if (!clientSocket.isClosed()) {
+                    clientSocket.close();
+                }
+            } catch (IOException e) {
+                LOGGER.severe("IOException while closing client socket: " + e.getMessage());
+            }
         }
     }
 

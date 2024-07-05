@@ -1,20 +1,21 @@
 import lombok.ToString;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 @ToString
 public class HttpRequest {
+    private static final Logger LOGGER = Logger.getLogger("HttpRequest");
     private RequestType requestType;
     private String path;
     private Protocol protocol;
     private double version;
+    private String requestBody;
     private Map<String, String> headers = new HashMap<>();
 
     public RequestType getRequestType() {
@@ -23,6 +24,14 @@ public class HttpRequest {
 
     public void setRequestType(RequestType requestType) {
         this.requestType = requestType;
+    }
+
+    public String getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
     }
 
     public String getRequestTarget() {
@@ -66,6 +75,10 @@ public class HttpRequest {
         return headers.get(key);
     }
 
+    public boolean containsHeader(String key) {
+        return headers.containsKey(key);
+    }
+
     public void readRequestLine(String requestLine) {
         String[] requestLineArr = requestLine.split(" ");
         assert requestLineArr.length==3 : "Request Line should have three values: RequestType, RequestTarget and HttpVersion";
@@ -82,17 +95,28 @@ public class HttpRequest {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             HttpRequest httpRequest = new HttpRequest();
 
+            //Read RequestLine
             String requestLine = reader.readLine();
             if (requestLine != null && !requestLine.isEmpty()) {
                 httpRequest.readRequestLine(requestLine);
             }
 
+            //Read Headers
             String line;
             while ((line = reader.readLine()) != null && !line.isEmpty()) {
                 String[] keyValuePair = line.split(": ");
                 if (keyValuePair.length == 2)
                     httpRequest.addHeader(keyValuePair[0], keyValuePair[1]);
             }
+
+            // Read Body
+            StringBuffer bodyBuffer = new StringBuffer();
+            while (reader.ready()) {
+                bodyBuffer.append((char) reader.read());
+            }
+            String body = bodyBuffer.toString();
+
+            httpRequest.setRequestBody(body);
 
             return httpRequest;
         } catch (IOException e) {

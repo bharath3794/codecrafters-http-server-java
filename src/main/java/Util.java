@@ -1,3 +1,5 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,5 +24,11 @@ public class Util {
     public static long getFileSize(String filePath) throws IOException {
         Path path = Paths.get(filePath);
         return Files.size(path);
+    }
+
+    public static void writeToFileUsingBufferedWriter(String filePath, String content) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(content);
+        }
     }
 }
