@@ -85,13 +85,10 @@ public class HttpServer {
                 }
 
 
-                String hexCompressedString = null;
-                int contentLength = 0;
+                byte[] byteCompressedArr = null;
                 switch (scheme) {
                     case "gzip" -> {
-                        byte[] byteCompressedArr = Util.compressStringToGzipByteArray(responseBody);
-                        hexCompressedString = Util.convertByteArrayToHexString(byteCompressedArr);
-                        contentLength = byteCompressedArr.length;
+                        byteCompressedArr = Util.compressStringToGzipByteArray(responseBody);
                     }
 
                 }
@@ -100,11 +97,13 @@ public class HttpServer {
                         .responseStatus(ResponseStatus.OK)
                         .header("Content-Type", "text/plain");
                 compressionScheme.ifPresent(value -> response.header("Content-Encoding", value.getScheme()));
-                if (hexCompressedString != null) {
-                    response.header("Content-Length", contentLength)
-                            .responseBody(hexCompressedString);
+                if (byteCompressedArr != null) {
+                    response.header("Content-Length", byteCompressedArr.length);
                 }
                 outputStream.write(response.createResponse().getBytes());
+                if (byteCompressedArr != null) {
+                    outputStream.write(byteCompressedArr);
+                }
             } else if (!request.containsHeader("Accept-Encoding") && request.getRequestTarget().startsWith("/echo/")) {
                 HttpResponse<String> response = new HttpResponse<>();
 

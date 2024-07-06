@@ -43,7 +43,6 @@ public class Util {
         try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
         ) {
             gzipOutputStream.write(s.getBytes(StandardCharsets.UTF_8));
-            gzipOutputStream.flush();
         }
         return byteArrayOutputStream.toByteArray();
     }
