@@ -7,6 +7,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
+import static javax.print.attribute.standard.Compression.GZIP;
+
 public class HttpServer {
     private static final Logger LOGGER = Logger.getLogger("HttpServer");
     private static final int DEFAULT_PORT = 4221;
@@ -69,6 +71,7 @@ public class HttpServer {
                 outputStream.write(response.createResponse().getBytes());
             } else if (request.containsHeader("Accept-Encoding") && request.getRequestTarget().startsWith("/echo/")) {
                 HttpResponse<String> response = new HttpResponse<>();
+                String responseBody = request.getRequestTarget().substring(6);
 
                 Optional<CompressionScheme> compressionScheme =
                         CompressionScheme.getPrioritizedCompressionSchemes()
@@ -76,11 +79,31 @@ public class HttpServer {
                                         request.getHeader("Accept-Encoding")
                                                 .contains(s.getScheme()))
                                 .findFirst();
+                String scheme = "";
+                if (compressionScheme.isPresent()) {
+                    scheme = compressionScheme.get().getScheme();
+                }
+
+
+                String hexCompressedString = null;
+                int contentLength = 0;
+                switch (scheme) {
+                    case "gzip" -> {
+                        byte[] byteCompressedArr = Util.compressStringToGzipByteArray(responseBody);
+                        hexCompressedString = Util.convertByteArrayToHexString(byteCompressedArr);
+                        contentLength = byteCompressedArr.length;
+                    }
+
+                }
                 response.protocol(request.getProtocol().toString())
                         .version(request.getVersion())
                         .responseStatus(ResponseStatus.OK)
                         .header("Content-Type", "text/plain");
                 compressionScheme.ifPresent(value -> response.header("Content-Encoding", value.getScheme()));
+                if (hexCompressedString != null) {
+                    response.header("Content-Length", contentLength)
+                            .responseBody(hexCompressedString);
+                }
                 outputStream.write(response.createResponse().getBytes());
             } else if (!request.containsHeader("Accept-Encoding") && request.getRequestTarget().startsWith("/echo/")) {
                 HttpResponse<String> response = new HttpResponse<>();
