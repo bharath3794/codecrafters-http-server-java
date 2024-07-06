@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -66,7 +67,22 @@ public class HttpServer {
                         .responseStatus(ResponseStatus.OK)
                         .responseBody("");
                 outputStream.write(response.createResponse().getBytes());
-            } else if (request.getRequestTarget().startsWith("/echo/")) {
+            } else if (request.containsHeader("Accept-Encoding") && request.getRequestTarget().startsWith("/echo/")) {
+                HttpResponse<String> response = new HttpResponse<>();
+
+                Optional<CompressionScheme> compressionScheme =
+                        CompressionScheme.getPrioritizedCompressionSchemes()
+                                .filter(s ->
+                                        request.getHeader("Accept-Encoding")
+                                                .contains(s.getScheme()))
+                                .findFirst();
+                response.protocol(request.getProtocol().toString())
+                        .version(request.getVersion())
+                        .responseStatus(ResponseStatus.OK)
+                        .header("Content-Type", "text/plain");
+                compressionScheme.ifPresent(value -> response.header("Content-Encoding", value.getScheme()));
+                outputStream.write(response.createResponse().getBytes());
+            } else if (!request.containsHeader("Accept-Encoding") && request.getRequestTarget().startsWith("/echo/")) {
                 HttpResponse<String> response = new HttpResponse<>();
 
                 String responseBody = request.getRequestTarget().substring(6);
